@@ -7,9 +7,10 @@
 import getopt
 import re
 import sys
+import numpy as np
 
 COMMAND = sys.argv.pop(0)
-NAMESDIR = "/home/erikt/projects/e-mental-health/usb/OVK/data/eriktks/names"
+NAMESDIR = "names"
 POSITIVENAMEFILE = NAMESDIR+"/positiveNames.txt"
 NEGATIVENAMEFILE = NAMESDIR+"/negativeNames.txt"
 NEOTHER = "O"
@@ -88,7 +89,7 @@ def anonymize(tokens,pos,ner,interactive):
     for i in range(0,len(tokens)):
         if tokens[i] in positiveNames.keys():
             tokens[i] = positiveNames[tokens[i]]
-        elif pos[i] == TAGNUM or re.search(r"^\d",tokens[i]): 
+        elif pos[i] == TAGNUM or re.search(r"^\d",tokens[i]):
             tokens[i] = "NUM"
         elif tokens[i] in MONTHS:
             tokens[i] = "MONTH"
@@ -109,7 +110,7 @@ def anonymize(tokens,pos,ner,interactive):
                     tokens[i] = checkOutput
             else:
                 addPositive(tokens[i],ner[i])
-                tokens[i] = checkOutput
+                tokens[i] = ner[i]
 
         tokens[i] = re.sub(r"^0\d\d\b","PHONE",tokens[i])
         tokens[i] = re.sub(r"\d\d\d\d\d\d*","PHONE",tokens[i])
@@ -157,9 +158,9 @@ def main(argv):
             tokens.append(token)
             pos.append(tag)
             ner.append(ne)
-        except: 
+        except:
             if line != "": sys.exit(COMMAND+": unexpected line: "+line)
-            elif len(tokens) > 0: 
+            elif len(tokens) > 0:
                  print(anonymize(tokens,pos,ner,interactive))
                  tokens,pos,ner = ([],[],[])
     if len(tokens) > 0: 
