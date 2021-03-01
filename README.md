@@ -23,7 +23,7 @@ The program tries to guess the author of an email but this sometimes fails. The 
 The files contain personal information, which needs to be removed. Therefore all names and numbers were removed from the file. This process contains two steps: 1. named entity recognition (ner), and 2. anonymization:
 ```
 ner.py < 1234.prepared > 1234.ner # requires frog, see comment below
-anonymize.py 1234.ner             # creates file 1234.ner.out, see comment below
+anonymize.py < 1234.ner           # creates file 1234.ner.out, see comment below
 ```
 
 For named entity recognition, we rely the program `frog`, which is part of the [LaMachine](https://github.com/proycon/lamachine) package. After installing the package, we run it as follows:

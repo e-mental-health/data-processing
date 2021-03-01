@@ -16,15 +16,25 @@ POSID = 3
 TOKENID = 0
 
 def prettyPrint(data):
+    prettifiedOutput = ""
     for row in data:
         if len(row) >= NERID+1 and row[0] != None:
             lastLine = row[TOKENID]+" "+row[POSID]+" "+row[NERID]
-            print(lastLine)
-    print("")
-    return()
+            prettifiedOutput += (lastLine + "\n")
+    prettifiedOutput += "\n"
+    return prettifiedOutput
+    
+def applyNer(lines):
+    frogclient = FrogClient('localhost',PORT,returnall=True)
+    nerOutput = ""
+    for line in lines:
+        data = frogclient.process(line)
+        nerOutput += prettyPrint(data)
+    return nerOutput
 
-frogclient = FrogClient('localhost',PORT,returnall=True)
-for line in sys.stdin:
-    data = frogclient.process(line)
-    prettyPrint(data)
+if __name__ == "__main__":
+    lines = []
+    for line in sys.stdin:
+        lines.append(line)
+    print(applyNer(lines))
 
