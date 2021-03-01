@@ -7,7 +7,6 @@
 import getopt
 import re
 import sys
-import numpy as np
 
 COMMAND = sys.argv.pop(0)
 NAMESDIR = "/home/pablo/Documents/COVIDA/deid/Tools/data-processing/names"
@@ -85,7 +84,7 @@ def anonymize(tokens,pos,ner,interactive):
     global positiveNames,negativeNames
 
     if len(tokens) > 1 and tokens[0] in SKIP and tokens[1] == ":":
-        return(" ".join(tokens))
+        return(" ".join(tokens) + "\n")
     for i in range(0,len(tokens)):
         if tokens[i] in positiveNames.keys():
             tokens[i] = positiveNames[tokens[i]]
@@ -116,7 +115,7 @@ def anonymize(tokens,pos,ner,interactive):
         tokens[i] = re.sub(r"\d\d\d\d\d\d*","PHONE",tokens[i])
     tokens = compressPER(tokens)
     line = " ".join(tokens)
-    return(line)
+    return(line + "\n")
 
 def readPositiveNames():
     data = {}
