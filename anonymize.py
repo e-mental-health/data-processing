@@ -10,7 +10,7 @@ import sys
 import numpy as np
 
 COMMAND = sys.argv.pop(0)
-NAMESDIR = "names"
+NAMESDIR = "/home/pablo/Documents/COVIDA/deid/Tools/data-processing/names"
 POSITIVENAMEFILE = NAMESDIR+"/positiveNames.txt"
 NEGATIVENAMEFILE = NAMESDIR+"/negativeNames.txt"
 NEOTHER = "O"
@@ -143,28 +143,40 @@ def readNegativeNames():
 positiveNames = readPositiveNames()
 negativeNames = readNegativeNames()
 
-def main(argv):
-    try: optionList, files = getopt.getopt(argv,"i",[])
-    except: sys.exit("usage: "+COMMAND+" [-i] < nerfile ")
-    interactive = "i" in optionList
+def splitLine(line):
+    line = line.rstrip()
+    token,tag,ne = line.split()
+    tag = re.sub(r"\(.*$","",tag)
+    ne = re.sub(r"\(.*$","",ne)
+    ne = re.sub(r"^.-","",ne)
+    return token, tag, ne
+
+# lines=sys.stdin or a list; if interactive=True, lines must be sys.stdin
+def anonymizeLines(lines, interactive):
     ner,pos,tokens = [[],[],[]]
-    for line in sys.stdin:
+    anon_out = ""
+    for line in lines:
         try:
-            line = line.rstrip()
-            token,tag,ne = line.split()
-            tag = re.sub(r"\(.*$","",tag)
-            ne = re.sub(r"\(.*$","",ne)
-            ne = re.sub(r"^.-","",ne)
+            token, tag, ne = splitLine(line)
             tokens.append(token)
             pos.append(tag)
             ner.append(ne)
         except:
-            if line != "": sys.exit(COMMAND+": unexpected line: "+line)
+            if line.strip():
+                sys.exit(COMMAND+": unexpected line: "+line)
             elif len(tokens) > 0:
-                 print(anonymize(tokens,pos,ner,interactive))
-                 tokens,pos,ner = ([],[],[])
-    if len(tokens) > 0: 
-         print(anonymize(tokens,pos,ner,interactive))
+                anon_out += anonymize(tokens, pos, ner, interactive)
+                tokens,pos,ner = ([],[],[])
+    if len(tokens) > 0:
+        anon_out += anonymize(tokens, pos, ner, interactive)
+    return anon_out
+
+
+def main(argv):
+    try: optionList, files = getopt.getopt(argv,"i",[])
+    except: sys.exit("usage: "+COMMAND+" [-i] < nerfile ")
+    interactive = "i" in optionList
+    print(anonymizeLines(sys.stdin, interactive))
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
