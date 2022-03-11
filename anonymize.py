@@ -9,7 +9,7 @@ import re
 import sys
 
 COMMAND = sys.argv.pop(0)
-NAMESDIR = "/home/erikt/projects/e-mental-health/usb/OVK/data/eriktks/names"
+NAMESDIR = "/home/pablo/Documents/COVIDA/deid/Tools/data-processing/names"
 POSITIVENAMEFILE = NAMESDIR+"/positiveNames.txt"
 NEGATIVENAMEFILE = NAMESDIR+"/negativeNames.txt"
 NEOTHER = "O"
@@ -84,11 +84,11 @@ def anonymize(tokens,pos,ner,interactive):
     global positiveNames,negativeNames
 
     if len(tokens) > 1 and tokens[0] in SKIP and tokens[1] == ":":
-        return(" ".join(tokens))
+        return(" ".join(tokens) + "\n")
     for i in range(0,len(tokens)):
         if tokens[i] in positiveNames.keys():
             tokens[i] = positiveNames[tokens[i]]
-        elif pos[i] == TAGNUM or re.search(r"^\d",tokens[i]): 
+        elif pos[i] == TAGNUM or re.search(r"^\d",tokens[i]):
             tokens[i] = "NUM"
         elif tokens[i] in MONTHS:
             tokens[i] = "MONTH"
@@ -109,13 +109,13 @@ def anonymize(tokens,pos,ner,interactive):
                     tokens[i] = checkOutput
             else:
                 addPositive(tokens[i],ner[i])
-                tokens[i] = checkOutput
+                tokens[i] = ner[i]
 
         tokens[i] = re.sub(r"^0\d\d\b","PHONE",tokens[i])
         tokens[i] = re.sub(r"\d\d\d\d\d\d*","PHONE",tokens[i])
     tokens = compressPER(tokens)
     line = " ".join(tokens)
-    return(line)
+    return(line + "\n")
 
 def readPositiveNames():
     data = {}
@@ -142,28 +142,40 @@ def readNegativeNames():
 positiveNames = readPositiveNames()
 negativeNames = readNegativeNames()
 
+def splitLine(line):
+    line = line.rstrip()
+    token,tag,ne = line.split()
+    tag = re.sub(r"\(.*$","",tag)
+    ne = re.sub(r"\(.*$","",ne)
+    ne = re.sub(r"^.-","",ne)
+    return token, tag, ne
+
+# lines=sys.stdin or a list; if interactive=True, lines must be sys.stdin
+def anonymizeLines(lines, interactive):
+    ner,pos,tokens = [[],[],[]]
+    anon_out = ""
+    for line in lines:
+        try:
+            token, tag, ne = splitLine(line)
+            tokens.append(token)
+            pos.append(tag)
+            ner.append(ne)
+        except:
+            if line.strip():
+                sys.exit(COMMAND+": unexpected line: "+line)
+            elif len(tokens) > 0:
+                anon_out += anonymize(tokens, pos, ner, interactive)
+                tokens,pos,ner = ([],[],[])
+    if len(tokens) > 0:
+        anon_out += anonymize(tokens, pos, ner, interactive)
+    return anon_out
+
+
 def main(argv):
     try: optionList, files = getopt.getopt(argv,"i",[])
     except: sys.exit("usage: "+COMMAND+" [-i] < nerfile ")
     interactive = "i" in optionList
-    ner,pos,tokens = [[],[],[]]
-    for line in sys.stdin:
-        try:
-            line = line.rstrip()
-            token,tag,ne = line.split()
-            tag = re.sub(r"\(.*$","",tag)
-            ne = re.sub(r"\(.*$","",ne)
-            ne = re.sub(r"^.-","",ne)
-            tokens.append(token)
-            pos.append(tag)
-            ner.append(ne)
-        except: 
-            if line != "": sys.exit(COMMAND+": unexpected line: "+line)
-            elif len(tokens) > 0: 
-                 print(anonymize(tokens,pos,ner,interactive))
-                 tokens,pos,ner = ([],[],[])
-    if len(tokens) > 0: 
-         print(anonymize(tokens,pos,ner,interactive))
+    print(anonymizeLines(sys.stdin, interactive))
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
